@@ -1,27 +1,10 @@
-/*
- * =====================================================================
- *  ESP32 Intruder Detection & Tracking System  (PlatformIO / main.cpp)
- * ---------------------------------------------------------------------
- *  This is the SAME firmware as the Arduino .ino version, with one
- *  addition: `#include <Arduino.h>` at the top. PlatformIO needs that
- *  line spelled out (the Arduino IDE added it invisibly for you).
- *
- *  Place this file at:  <project>/src/main.cpp
- *
- *  Hardware : ELEGOO ESP-32 Super Starter Kit
- *  Sensors  : HC-SR501 PIR (motion), HC-SR04 (ultrasonic ranging)
- *  Actuator : SG90 servo (pan / scan)
- *  Feedback : SSD1306 128x64 I2C OLED, active buzzer
- * =====================================================================
- */
-
-#include <Arduino.h>          // <-- required in PlatformIO
+#include <Arduino.h>
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 #include <ESP32Servo.h>
 
-// ----------------------------- Pins ---------------------------------
+//  Pins 
 const int PIR_PIN    = 35;   // HC-SR501 OUT  (input-only pin, 3.3V logic)
 const int TRIG_PIN   = 26;   // HC-SR04 TRIG
 const int ECHO_PIN   = 34;   // HC-SR04 ECHO  (input-only; USE 1k/2k DIVIDER!)
@@ -30,13 +13,13 @@ const int BUZZER_PIN = 25;   // Active buzzer (+)
 const int SDA_PIN    = 21;   // OLED SDA
 const int SCL_PIN    = 22;   // OLED SCL
 
-// --------------------------- OLED setup -----------------------------
+//  OLED setup
 const int     SCREEN_WIDTH  = 128;
 const int     SCREEN_HEIGHT = 64;    // change to 32 if your OLED is 128x32
 const uint8_t OLED_ADDR     = 0x3C;  // some modules are 0x3D
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 
-// --------------------------- Servo setup ----------------------------
+//  Servo setup 
 Servo scanServo;
 const int SERVO_MIN   = 15;
 const int SERVO_MAX   = 165;
@@ -44,23 +27,23 @@ const int SERVO_HOME  = 90;
 const int SERVO_STEP  = 3;
 const int SETTLE_MS   = 30;
 
-// ------------------------ Detection params --------------------------
+//  Detection params 
 const float DETECT_CM  = 100.0;
 const float MAX_CM     = 400.0;
 const unsigned long REARM_MS = 3000;
 
-// --------------------------- State machine --------------------------
+//  State machine 
 enum State { IDLE, SCANNING, TRACKING };
 State state = IDLE;
 
-// ------------------- Function prototypes (C++ needs these) ----------
+//  Function prototypes (C++ needs these) 
 float readDistanceCM();
 void  beep(int ms, int times, int gap);
 void  showStatus(const char* l1, const char* l2, const char* l3);
 void  showTarget(int angle, float range);
 int   performScan(float &bestRange);
 
-// ------------------- Read ultrasonic range --------------------------
+//  Read ultrasonic range 
 float readDistanceCM() {
   digitalWrite(TRIG_PIN, LOW);
   delayMicroseconds(2);
@@ -74,7 +57,7 @@ float readDistanceCM() {
   return (cm > MAX_CM) ? MAX_CM : cm;
 }
 
-// ------------------------- Buzzer -----------------------------------
+//  Buzzer 
 void beep(int ms, int times = 1, int gap = 80) {
   for (int i = 0; i < times; i++) {
     digitalWrite(BUZZER_PIN, HIGH);
@@ -84,7 +67,7 @@ void beep(int ms, int times = 1, int gap = 80) {
   }
 }
 
-// ------------------------- OLED status ------------------------------
+//  OLED status 
 void showStatus(const char* l1, const char* l2 = "", const char* l3 = "") {
   display.clearDisplay();
   display.setTextColor(SSD1306_WHITE);
@@ -95,7 +78,7 @@ void showStatus(const char* l1, const char* l2 = "", const char* l3 = "") {
   display.display();
 }
 
-// ------------------------- OLED target ------------------------------
+//  OLED target 
 void showTarget(int angle, float range) {
   display.clearDisplay();
   display.setTextColor(SSD1306_WHITE);
@@ -107,7 +90,7 @@ void showTarget(int angle, float range) {
   display.display();
 }
 
-// ------------------------------ Setup -------------------------------
+//  Setup 
 void setup() {
   Serial.begin(115200);
 
@@ -132,7 +115,7 @@ void setup() {
   delay(2000);   // HC-SR501 needs ~30-60s to fully stabilize on power-up
 }
 
-// ----------------------------- Scan ---------------------------------
+//  Scan 
 int performScan(float &bestRange) {
   int   bestAngle = -1;
   float minDist   = DETECT_CM;
@@ -148,7 +131,7 @@ int performScan(float &bestRange) {
   return bestAngle;
 }
 
-// ------------------------------ Loop --------------------------------
+//  Loop 
 void loop() {
   switch (state) {
     case IDLE:
